@@ -19,12 +19,12 @@ jobs:
         with:
           node-version: 20
 
+      # Android SDK уже установлен на ubuntu-latest (ANDROID_HOME)
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
-      - uses: android-actions/setup-android@v3
 
       - name: Install dependencies
         run: npm install
