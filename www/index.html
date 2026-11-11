@@ -10,7 +10,7 @@
 <link rel="manifest" href="/music/manifest.json">
 <link rel="icon" href="/music/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="/music/icon-192.png">
-<title>MusicFlow</title>
+<title>МэллПлеер</title>
 <style>
 :root{
   --a:#b6ff3b;--bg:#060806;--tx:#f1f7ec;--sub:#7d8c79;
@@ -1149,6 +1149,67 @@ async function installApp(){
 window.addEventListener('appinstalled',()=>{
   $('#installStatus').textContent='MusicFlow установлен!';
   $('#installApp').classList.add('hidden');});
+
+/* ── Уведомление с плеером (шторка) ──
+   Нативно (APK) — плагин capacitor-music-controls-plugin; в браузере — Media Session API. */
+(function(){
+  const a=$('#audio');
+  const plug=n=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[n];
+  const APP='МэллПлеер';
+  let shownKey='', askedNotif=false, lastTick=0;
+  const title=t=>t?(t.name||t.filename||''):'';
+
+  function mediaSessionSync(){
+    if(!('mediaSession' in navigator)||!S.cur)return;
+    try{navigator.mediaSession.metadata=new MediaMetadata({title:title(S.cur),artist:APP,album:APP});}catch(e){}
+    try{navigator.mediaSession.playbackState=a.paused?'paused':'playing';}catch(e){}
+  }
+
+  function nativeCreate(){
+    const mc=plug('MusicControls');
+    if(!mc||!S.cur)return;
+    if(!askedNotif){askedNotif=true;const ln=plug('LocalNotifications');if(ln)ln.requestPermissions().catch(()=>{});}
+    const key=S.cur.filename+'|'+S.qi;
+    if(key===shownKey)return;
+    shownKey=key;
+    const dur=(a.duration&&isFinite(a.duration))?Math.round(a.duration):0;
+    mc.create({track:title(S.cur),artist:APP,album:APP,isPlaying:!a.paused,dismissable:true,
+      hasPrev:true,hasNext:true,hasClose:true,duration:dur,elapsed:Math.round(a.currentTime||0)}).catch(()=>{});
+  }
+
+  function nativeSync(force){
+    const mc=plug('MusicControls');
+    if(!mc||!S.cur)return;
+    const now=Date.now();
+    if(!force&&now-lastTick<4000)return;
+    lastTick=now;
+    try{mc.updateElapsed({elapsed:Math.round(a.currentTime||0),isPlaying:!a.paused});}catch(e){}
+  }
+
+  function refresh(){mediaSessionSync();nativeCreate();nativeSync(true);}
+
+  if('mediaSession' in navigator){
+    const ms=navigator.mediaSession;
+    const set=(k,f)=>{try{ms.setActionHandler(k,f);}catch(e){}};
+    set('play',()=>a.play().catch(()=>{}));
+    set('pause',()=>a.pause());
+    set('nexttrack',()=>next());
+    set('previoustrack',()=>prev());
+  }
+
+  document.addEventListener('controlsNotification',ev=>{
+    const m=ev&&ev.message;
+    if(m==='music-controls-play')a.play().catch(()=>{});
+    else if(m==='music-controls-pause')a.pause();
+    else if(m==='music-controls-toggle-play-pause')togglePlay();
+    else if(m==='music-controls-next')next();
+    else if(m==='music-controls-previous')prev();
+    else if(m==='music-controls-destroy')a.pause();
+  });
+
+  ['loadstart','loadedmetadata','play','pause','ended'].forEach(ev=>a.addEventListener(ev,refresh));
+  a.addEventListener('timeupdate',()=>nativeSync(false));
+})();
 
 /* ── Старт ── */
 init().catch(e=>toast('Ошибка запуска: '+e.message));

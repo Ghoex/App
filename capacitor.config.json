@@ -1,6 +1,6 @@
 {
   "appId": "ru.burmolda.musicflow",
-  "appName": "MusicFlow",
+  "appName": "МэллПлеер",
   "webDir": "www",
   "server": {
     "url": "https://burmolda.ru/music",

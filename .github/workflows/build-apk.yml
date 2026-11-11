@@ -33,6 +33,7 @@ jobs:
         run: |
           if [ ! -d android ]; then npx cap add android; fi
           npx cap sync android
+          python3 scripts/patch-android.py
 
       - name: Build debug APK
         working-directory: android
