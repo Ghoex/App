@@ -1166,7 +1166,7 @@ window.addEventListener('appinstalled',()=>{
   }
 
   function nativeCreate(){
-    const mc=plug('MusicControls');
+    const mc=plug('CapacitorMusicControls');
     if(!mc||!S.cur)return;
     if(!askedNotif){askedNotif=true;const ln=plug('LocalNotifications');if(ln)ln.requestPermissions().catch(()=>{});}
     const key=S.cur.filename+'|'+S.qi;
@@ -1178,7 +1178,7 @@ window.addEventListener('appinstalled',()=>{
   }
 
   function nativeSync(force){
-    const mc=plug('MusicControls');
+    const mc=plug('CapacitorMusicControls');
     if(!mc||!S.cur)return;
     const now=Date.now();
     if(!force&&now-lastTick<4000)return;
